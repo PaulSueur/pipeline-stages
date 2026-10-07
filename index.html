@@ -51,8 +51,15 @@
   .subtitle{ color:var(--text-dim); font-size:.85rem; margin-top:2px; }
   .header-actions{ display:flex; gap:10px; flex-wrap:wrap; }
 
+  .save-indicator{
+    font-size:.72rem; color:var(--ok); display:flex; align-items:center; gap:6px;
+    padding:0 28px 8px;
+  }
+  .save-indicator.saving{ color:var(--warn); }
+  .save-dot{ width:8px; height:8px; border-radius:50%; background:var(--ok); flex-shrink:0; }
+
   .toolbar{ display:flex; flex-wrap:wrap; gap:10px; padding:0 28px 14px; align-items:center; }
-  input[type="text"], input[type="date"], input[type="url"], select, textarea{
+  input[type="text"], input[type="date"], input[type="url"], select, textarea, input[type="file"]{
     background:var(--bg-soft); border:1px solid var(--border); color:var(--text);
     border-radius:10px; padding:9px 12px; font-size:.9rem; outline:none; transition:.2s; font-family:inherit;
   }
@@ -150,38 +157,42 @@
   .notes-preview{ font-size:.7rem; color:var(--text-dim); margin-top:6px; line-height:1.3;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-  .empty-msg{ color:var(--text-dim); font-size:.78rem; text-align:center; padding:18px 6px; }
+  .empty-msg{ color:var(--text-dim); font-size:.78rem; text-align:center; padding:20px 10px; }
 
   /* Modal */
-  .overlay{
+  .modal-overlay{
     position:fixed; inset:0; background:rgba(5,6,15,.65); backdrop-filter:blur(2px);
-    display:none; align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto; z-index:50;
+    display:none; align-items:flex-start; justify-content:center; z-index:100; padding:30px 16px; overflow-y:auto;
   }
-  .overlay.open{ display:flex; }
+  .modal-overlay.open{ display:flex; }
   .modal{
-    background:var(--bg-soft); border:1px solid var(--border); border-radius:16px; padding:22px;
-    width:100%; max-width:620px; box-shadow:var(--shadow);
+    background:var(--bg-soft); border:1px solid var(--border); border-radius:var(--radius);
+    width:100%; max-width:640px; padding:24px; box-shadow:var(--shadow);
   }
   .modal h2{ margin:0 0 16px; font-size:1.15rem; }
   .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .form-grid .full{ grid-column:1 / -1; }
-  .field label{ font-size:.75rem; color:var(--text-dim); display:block; margin-bottom:5px; font-weight:600; }
-  .field input, .field select, .field textarea{ width:100%; }
-  .field textarea{ resize:vertical; min-height:60px; }
+  .form-grid .full{ grid-column:1/-1; }
+  .form-field label{ display:block; font-size:.74rem; color:var(--text-dim); margin-bottom:4px; font-weight:600; }
+  .form-field input, .form-field select, .form-field textarea{ width:100%; }
+  .form-field textarea{ min-height:60px; resize:vertical; }
 
-  .score-box{ grid-column:1/-1; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:4px; }
-  .score-box h3{ margin:0 0 10px; font-size:.9rem; display:flex; justify-content:space-between; align-items:center; }
+  .scoring-box{
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:4px;
+  }
+  .scoring-box h3{ margin:0 0 10px; font-size:.88rem; display:flex; justify-content:space-between; align-items:center;}
+  .score-live{ font-weight:800; font-size:1rem; color:var(--accent2); }
   .slider-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:.78rem; }
   .slider-row label{ flex:0 0 150px; color:var(--text-dim); }
-  .slider-row input[type=range]{ flex:1; }
-  .slider-row .val{ width:22px; text-align:center; font-weight:700; }
-  .score-live{ font-size:1.1rem; font-weight:800; }
+  .slider-row input[type="range"]{ flex:1; }
+  .slider-row .val{ width:20px; text-align:center; font-weight:700; }
 
-  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:18px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
 
-  footer{ text-align:center; color:var(--text-dim); font-size:.72rem; padding:20px; }
+  footer.note{
+    padding:20px 28px 0; color:var(--text-dim); font-size:.72rem; line-height:1.5; max-width:900px;
+  }
 
-  @media (max-width:980px){
+  @media (max-width:900px){
     .board{ grid-template-columns:1fr; }
     .form-grid{ grid-template-columns:1fr; }
     .slider-row label{ flex:0 0 120px; }
@@ -192,44 +203,51 @@
 
 <header>
   <div>
-    <h1>📋 Pipeline de Candidatures de Stage</h1>
-    <div class="subtitle">Finance de Marché · Corporate Finance · Tech (Sales B2B) — 🇫🇷 Paris / 🇬🇧 Londres</div>
+    <h1>🎯 Pipeline de Candidatures de Stage</h1>
+    <div class="subtitle">Finance de Marché · Corporate Finance · Tech BtoB — Paris 🇫🇷 &amp; Londres 🇬🇧</div>
   </div>
   <div class="header-actions">
-    <button class="btn" id="btnAdd">+ Ajouter une candidature</button>
-    <button class="btn secondary" id="btnReload">↺ Recharger offres de veille</button>
-    <button class="btn secondary" id="btnExport">⬇ Exporter JSON</button>
-    <button class="btn secondary" id="btnImportTrigger">⬆ Importer JSON</button>
-    <input type="file" id="fileImport" accept="application/json" style="display:none">
+    <button class="btn" id="btn-add">+ Ajouter une candidature</button>
+    <button class="btn secondary" id="btn-export">⬇️ Exporter JSON</button>
+    <button class="btn secondary" id="btn-import-trigger">⬆️ Importer JSON</button>
+    <input type="file" id="file-import" accept="application/json" style="display:none">
+    <button class="btn secondary" id="btn-reload-sample">↺ Recharger offres de veille</button>
+    <button class="btn secondary" id="btn-restore-backup" style="display:none; border-color:var(--warn); color:var(--warn);">↩️ Restaurer avant dernier remplacement</button>
   </div>
 </header>
 
+<div class="save-indicator" id="save-indicator">
+  <span class="save-dot"></span> <span id="save-indicator-text">Données sauvegardées automatiquement dans ce navigateur</span>
+</div>
+
+<div style="margin:0 28px 14px; padding:10px 14px; background:rgba(255,180,84,.1); border:1px solid rgba(255,180,84,.35); border-radius:10px; font-size:.74rem; color:var(--warn); line-height:1.5;">
+  ⚠️ <b>Important :</b> tes données sont liées à <b>l'adresse exacte (URL) + navigateur</b> que tu utilises. Utilise toujours
+  <b>le même lien unique</b> (ta page GitHub Pages, par ex. <code>https://ton-nom.github.io/pipeline-stages/</code>) et le même navigateur
+  pour retrouver tes candidatures. Si tu ouvres une copie du fichier téléchargée en local (double-clic), ou un autre navigateur/ordinateur,
+  ce sera un stockage <b>complètement différent et vide</b> (rempli par défaut avec les 10 offres de veille) — ce n'est pas une perte de données,
+  juste un autre "tiroir" de sauvegarde.
+</div>
+
 <div class="toolbar">
-  <input type="text" id="search" placeholder="🔎 Rechercher entreprise, poste, notes...">
-  <select id="filterTheme">
-    <option value="all">Toutes thématiques</option>
+  <input type="text" id="search" placeholder="🔍 Rechercher (entreprise, poste...)">
+  <select id="filter-theme">
+    <option value="">Toutes thématiques</option>
     <option value="marche">📈 Finance de Marché</option>
     <option value="corporate">🤝 Corporate Finance</option>
-    <option value="tech">💻 Tech (Sales B2B)</option>
+    <option value="tech">💻 Tech</option>
   </select>
-  <select id="filterVille">
-    <option value="all">Toutes villes</option>
+  <select id="filter-ville">
+    <option value="">Toutes villes</option>
     <option value="paris">🇫🇷 Paris</option>
     <option value="londres">🇬🇧 Londres</option>
   </select>
-  <select id="filterType">
-    <option value="all">Tous types</option>
-    <option value="summer">Summer</option>
-    <option value="offcycle">Off-cycle</option>
-    <option value="classique">Classique</option>
-  </select>
-  <select id="sortBy">
+  <select id="sort-by">
     <option value="deadline">Trier par deadline</option>
     <option value="score">Trier par score</option>
-    <option value="parution">Trier par date de parution</option>
-    <option value="debut">Trier par date de début</option>
+    <option value="date_ajout">Trier par date d'ajout</option>
+    <option value="entreprise">Trier par entreprise (A-Z)</option>
   </select>
-  <div class="view-toggle" id="viewToggle">
+  <div class="view-toggle" id="view-toggle">
     <button data-view="etape" class="active">Par étape</button>
     <button data-view="theme">Par thématique</button>
     <button data-view="ville">Par ville</button>
@@ -238,88 +256,128 @@
 
 <div class="stats" id="stats"></div>
 
-<div id="boardContainer"></div>
+<div id="board-container"></div>
 
-<footer>Les données sont sauvegardées automatiquement dans ton navigateur (localStorage). Pense à exporter régulièrement en JSON pour backup.</footer>
+<footer class="note">
+  ⚠️ Les données sont sauvegardées automatiquement dans le <b>localStorage de ce navigateur</b>, lié à cette URL précise.
+  Elles persistent à la fermeture de l'onglet / de l'ordinateur, tant que tu rouvres la même URL dans le même navigateur
+  et que tu ne vides pas les données de navigation. Pense tout de même à faire un <b>export JSON régulier</b> comme sauvegarde de sécurité,
+  notamment avant de changer de navigateur ou d'appareil.
+</footer>
 
-<!-- Modal -->
-<div class="overlay" id="overlay">
+<div class="modal-overlay" id="modal-overlay">
   <div class="modal">
-    <h2 id="modalTitle">Ajouter une candidature</h2>
-    <form id="cardForm">
-      <input type="hidden" id="f_id">
+    <h2 id="modal-title">Ajouter une candidature</h2>
+    <form id="card-form">
+      <input type="hidden" id="f-id">
       <div class="form-grid">
-        <div class="field"><label>Entreprise *</label><input type="text" id="f_company" required></div>
-        <div class="field"><label>Poste *</label><input type="text" id="f_role" required></div>
-
-        <div class="field">
+        <div class="form-field full">
+          <label>Entreprise *</label>
+          <input type="text" id="f-entreprise" required>
+        </div>
+        <div class="form-field full">
+          <label>Poste *</label>
+          <input type="text" id="f-poste" required>
+        </div>
+        <div class="form-field">
           <label>Thématique *</label>
-          <select id="f_theme" required>
+          <select id="f-theme" required>
             <option value="marche">📈 Finance de Marché</option>
             <option value="corporate">🤝 Corporate Finance</option>
-            <option value="tech">💻 Tech (Sales B2B)</option>
+            <option value="tech">💻 Tech</option>
           </select>
         </div>
-        <div class="field">
-          <label>Sous-catégorie</label>
-          <select id="f_subrole"></select>
+        <div class="form-field">
+          <label>Sous-thématique</label>
+          <input type="text" id="f-soustheme" list="sous-theme-suggestions" placeholder="ex: Sales Trading, M&A, SDR...">
+          <datalist id="sous-theme-suggestions"></datalist>
         </div>
-
-        <div class="field">
+        <div class="form-field">
           <label>Ville *</label>
-          <select id="f_ville" required>
+          <select id="f-ville" required>
             <option value="paris">🇫🇷 Paris</option>
             <option value="londres">🇬🇧 Londres</option>
           </select>
         </div>
-        <div class="field">
+        <div class="form-field">
           <label>Type de stage</label>
-          <select id="f_type">
-            <option value="summer">Summer</option>
+          <select id="f-type">
+            <option value="summer">Summer Internship</option>
             <option value="offcycle">Off-cycle</option>
-            <option value="classique">Classique</option>
+            <option value="classique">Stage classique</option>
           </select>
         </div>
-
-        <div class="field full"><label>Lien de l'annonce</label><input type="url" id="f_link" placeholder="https://..."></div>
-
-        <div class="field"><label>Date de parution</label><input type="date" id="f_parution"></div>
-        <div class="field"><label>Deadline de candidature</label><input type="date" id="f_deadline"></div>
-        <div class="field"><label>Date de début de stage</label><input type="date" id="f_debut"></div>
-        <div class="field">
-          <label>Étape</label>
-          <select id="f_stage">
-            <option value="postuler">À postuler</option>
+        <div class="form-field full">
+          <label>Lien de l'annonce</label>
+          <input type="url" id="f-lien" placeholder="https://...">
+        </div>
+        <div class="form-field">
+          <label>Date de parution</label>
+          <input type="date" id="f-date-parution">
+        </div>
+        <div class="form-field">
+          <label>Deadline de candidature</label>
+          <input type="date" id="f-deadline">
+        </div>
+        <div class="form-field">
+          <label>Date de début de stage</label>
+          <input type="date" id="f-date-debut">
+        </div>
+        <div class="form-field">
+          <label>Étape du pipeline</label>
+          <select id="f-etape">
+            <option value="a_postuler">À postuler</option>
             <option value="envoye">Candidature envoyée</option>
             <option value="entretien">Entretien</option>
             <option value="offre">Offre</option>
             <option value="refuse">Refusé</option>
           </select>
         </div>
-
-        <div class="score-box">
-          <h3>Scoring de priorité <span class="score-live" id="scoreLive">0 / 100</span></h3>
-          <div class="slider-row"><label>Intérêt personnel</label><input type="range" min="1" max="5" value="3" id="s_interet"><span class="val" id="v_interet">3</span></div>
-          <div class="slider-row"><label>Prestige / formation</label><input type="range" min="1" max="5" value="3" id="s_prestige"><span class="val" id="v_prestige">3</span></div>
-          <div class="slider-row"><label>Accessibilité</label><input type="range" min="1" max="5" value="3" id="s_access"><span class="val" id="v_access">3</span></div>
-          <div class="slider-row"><label>Rémunération</label><input type="range" min="1" max="5" value="3" id="s_remu"><span class="val" id="v_remu">3</span></div>
-          <div class="field" style="margin-top:8px;">
-            <label>Forcer la priorité (optionnel)</label>
-            <select id="f_manual">
-              <option value="">Automatique (selon score)</option>
-              <option value="haute">Haute</option>
-              <option value="moyenne">Moyenne</option>
-              <option value="basse">Basse</option>
-            </select>
+        <div class="form-field full">
+          <label><input type="checkbox" id="f-rolling" style="width:auto;"> Candidature "rolling" (pas de deadline fixe, traité au fil de l'eau)</label>
+        </div>
+        <div class="form-field full">
+          <label>Notes</label>
+          <textarea id="f-notes" placeholder="Contact RH, points à préparer..."></textarea>
+        </div>
+        <div class="form-field full">
+          <div class="scoring-box">
+            <h3>Scoring de priorité <span class="score-live" id="score-live">0/100</span></h3>
+            <div class="slider-row">
+              <label>Intérêt personnel</label>
+              <input type="range" min="1" max="5" value="3" id="f-score-interet">
+              <span class="val" id="val-interet">3</span>
+            </div>
+            <div class="slider-row">
+              <label>Prestige / formation</label>
+              <input type="range" min="1" max="5" value="3" id="f-score-prestige">
+              <span class="val" id="val-prestige">3</span>
+            </div>
+            <div class="slider-row">
+              <label>Accessibilité (chances)</label>
+              <input type="range" min="1" max="5" value="3" id="f-score-accessibilite">
+              <span class="val" id="val-accessibilite">3</span>
+            </div>
+            <div class="slider-row">
+              <label>Rémunération</label>
+              <input type="range" min="1" max="5" value="3" id="f-score-remuneration">
+              <span class="val" id="val-remuneration">3</span>
+            </div>
+            <div class="form-field" style="margin-top:8px;">
+              <label>Forcer la priorité (optionnel)</label>
+              <select id="f-priority-override">
+                <option value="auto">Automatique (selon score)</option>
+                <option value="haute">Forcer : Haute</option>
+                <option value="moyenne">Forcer : Moyenne</option>
+                <option value="basse">Forcer : Basse</option>
+              </select>
+            </div>
           </div>
         </div>
-
-        <div class="field full"><label>Notes</label><textarea id="f_notes" placeholder="Contact RH, points à préparer, process..."></textarea></div>
       </div>
       <div class="modal-actions">
-        <button type="button" class="btn secondary" id="btnCancel">Annuler</button>
-        <button type="button" class="btn danger" id="btnDelete" style="display:none;">Supprimer</button>
-        <button type="submit" class="btn">Enregistrer</button>
+        <button type="button" class="btn secondary" id="btn-cancel">Annuler</button>
+        <button type="submit" class="btn">💾 Enregistrer</button>
       </div>
     </form>
   </div>
@@ -329,612 +387,614 @@
 (function(){
   "use strict";
 
-  var STORAGE_KEY = "pipeline_stages_data_v4";
+  var STORAGE_KEY = "pipelineStagesData_v1";
+  var VIEW_KEY = "pipelineStagesView_v1";
+  var BACKUP_KEY = "pipelineStagesBackupBeforeOverwrite_v1";
 
-  var STAGES = [
-    {key:"postuler", label:"À postuler", color:"#9aa0c3"},
-    {key:"envoye", label:"Candidature envoyée", color:"#5ea0ff"},
-    {key:"entretien", label:"Entretien", color:"#ffb454"},
-    {key:"offre", label:"Offre", color:"#4fd17a"},
-    {key:"refuse", label:"Refusé", color:"#ff5d7a"}
+  var ETAPES = [
+    { key:"a_postuler", label:"À postuler", color:"#9aa0c3" },
+    { key:"envoye", label:"Candidature envoyée", color:"#5ea0ff" },
+    { key:"entretien", label:"Entretien", color:"#ffb454" },
+    { key:"offre", label:"Offre", color:"#4fd17a" },
+    { key:"refuse", label:"Refusé", color:"#ff5d7a" }
   ];
 
   var THEMES = {
-    marche:    {label:"Finance de Marché", icon:"📈", cls:"tag-theme-marche", subs:["Sales Trading","Asset Management"]},
-    corporate: {label:"Corporate Finance", icon:"🤝", cls:"tag-theme-corporate", subs:["M&A","Restructuring"]},
-    tech:      {label:"Tech (Sales B2B)", icon:"💻", cls:"tag-theme-tech", subs:["Sales","Business Development","Account Executive"]}
+    marche:   { label:"Finance de Marché", icon:"📈", cls:"tag-theme-marche", suggestions:["Sales Trading","Asset Management"] },
+    corporate:{ label:"Corporate Finance", icon:"🤝", cls:"tag-theme-corporate", suggestions:["M&A","Restructuring"] },
+    tech:     { label:"Tech", icon:"💻", cls:"tag-theme-tech", suggestions:["Sales","Business Development","Account Executive","SDR"] }
   };
 
   var VILLES = {
-    paris:   {label:"Paris", flag:"🇫🇷", cls:"tag-ville-paris"},
-    londres: {label:"Londres", flag:"🇬🇧", cls:"tag-ville-londres"}
+    paris:   { label:"Paris", icon:"🇫🇷", cls:"tag-ville-paris" },
+    londres: { label:"Londres", icon:"🇬🇧", cls:"tag-ville-londres" }
   };
 
-  var TYPES = { summer:"Summer", offcycle:"Off-cycle", classique:"Classique" };
-
-  var state = {
-    data: [],
-    view: "etape",
-    search: "",
-    filterTheme: "all",
-    filterVille: "all",
-    filterType: "all",
-    sortBy: "deadline",
-    editingId: null
+  var TYPES = {
+    summer:   "Summer Internship",
+    offcycle: "Off-cycle",
+    classique:"Stage classique"
   };
 
-  function uid(){ return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  var cards = [];
+  var currentView = "etape";
+  var editingId = null;
 
-  function escapeHtml(s){
-    if(s===undefined || s===null) return "";
-    return String(s)
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;")
-      .replace(/'/g,"&#39;");
-  }
-
-  function seedData(){
+  /* ---------- Sample data (veille réelle) ---------- */
+  function getSampleData(){
+    var now = Date.now();
+    function mk(o, idx){
+      o.id = "sample-" + idx + "-" + now;
+      o.dateAjout = o.dateAjout || new Date().toISOString().slice(0,10);
+      if(o.priorityOverride === undefined) o.priorityOverride = "auto";
+      if(o.rolling === undefined) o.rolling = false;
+      if(o.notes === undefined) o.notes = "";
+      return o;
+    }
     return [
-      {
-        id:uid(), company:"Jefferies", role:"Summer Analyst — Equity Sales & Trading",
-        theme:"marche", sub:"Sales Trading", ville:"londres", type:"summer",
-        link:"https://www.jefferies.com/our-firm/careers/",
-        parution:"2026-09-01", deadline:"2026-11-29", debut:"2027-06-01",
-        stage:"postuler", scoring:{interet:4,prestige:4,access:3,remu:4}, manual:"",
-        notes:"Process en rolling basis chez Jefferies : mieux vaut postuler bien avant la deadline affichée."
-      },
-      {
-        id:uid(), company:"Lazard", role:"Asset Management — Sales & Marketing Internship",
-        theme:"marche", sub:"Asset Management", ville:"londres", type:"classique",
-        link:"https://www.lazard.com/careers/",
-        parution:"2026-09-15", deadline:"2026-10-31", debut:"2027-01-05",
-        stage:"postuler", scoring:{interet:3,prestige:4,access:3,remu:3}, manual:"",
-        notes:"Bon pont vers un poste côté distribution AM."
-      },
-      {
-        id:uid(), company:"Rothschild & Co", role:"Off-cycle — M&A Corporate and Financing Advisory",
-        theme:"corporate", sub:"M&A", ville:"paris", type:"offcycle",
-        link:"https://www.rothschildandco.com/en/careers/",
-        parution:"2026-09-10", deadline:"2026-11-01", debut:"2027-01-05",
-        stage:"postuler", scoring:{interet:4,prestige:5,access:2,remu:4}, manual:"",
-        notes:"Boutique très réputée en M&A à Paris, process sélectif."
-      },
-      {
-        id:uid(), company:"Rothschild & Co", role:"Stage — Transaction R&Co Global Advisory",
-        theme:"corporate", sub:"M&A", ville:"paris", type:"classique",
-        link:"https://www.rothschildandco.com/en/careers/",
-        parution:"2026-08-20", deadline:"2026-10-20", debut:"2027-02-01",
-        stage:"postuler", scoring:{interet:4,prestige:5,access:2,remu:4}, manual:"",
-        notes:""
-      },
-      {
-        id:uid(), company:"Evercore", role:"Summer Intern — Restructuring",
-        theme:"corporate", sub:"Restructuring", ville:"londres", type:"summer",
-        link:"https://www.evercore.com/careers/",
-        parution:"2026-08-01", deadline:"2026-10-11", debut:"2027-06-15",
-        stage:"postuler", scoring:{interet:4,prestige:5,access:2,remu:5}, manual:"",
-        notes:"⚠️ Deadline très proche — prioriser cette candidature."
-      },
-      {
-        id:uid(), company:"Evercore", role:"Off-cycle — Financial Sponsors Group",
-        theme:"corporate", sub:"M&A", ville:"paris", type:"offcycle",
-        link:"https://www.evercore.com/careers/",
-        parution:"2026-09-05", deadline:"2026-10-25", debut:"2027-01-12",
-        stage:"postuler", scoring:{interet:3,prestige:5,access:2,remu:4}, manual:"",
-        notes:""
-      },
-      {
-        id:uid(), company:"Lazard", role:"M&A Internship (LazardNext)",
-        theme:"corporate", sub:"M&A", ville:"paris", type:"classique",
-        link:"https://www.lazard.com/careers/",
-        parution:"2026-09-01", deadline:"2026-11-15", debut:"2027-01-05",
-        stage:"postuler", scoring:{interet:4,prestige:5,access:3,remu:4}, manual:"",
-        notes:"Candidature via la plateforme LazardNext."
-      },
-      {
-        id:uid(), company:"Tencent Cloud", role:"Cloud & AI Sales Intern",
-        theme:"tech", sub:"Sales", ville:"londres", type:"classique",
-        link:"https://careers.tencent.com/",
-        parution:"2026-09-12", deadline:"2026-11-05", debut:"2027-01-10",
-        stage:"postuler", scoring:{interet:4,prestige:3,access:4,remu:4}, manual:"",
-        notes:"Vente de solutions Cloud/IA en B2B — gros corporate, bon potentiel de commissions."
-      },
-      {
-        id:uid(), company:"Snowflake", role:"Sales Development Representative (SDR) Intern",
-        theme:"tech", sub:"Sales", ville:"londres", type:"classique",
-        link:"https://careers.snowflake.com/",
-        parution:"2026-09-08", deadline:"2026-10-30", debut:"2027-01-15",
-        stage:"postuler", scoring:{interet:4,prestige:4,access:3,remu:4}, manual:"",
-        notes:"Acteur majeur du cloud data — forte culture sales B2B."
-      },
-      {
-        id:uid(), company:"Box", role:"SDR Placement Student",
-        theme:"tech", sub:"Sales", ville:"londres", type:"classique",
-        link:"https://www.box.com/careers",
-        parution:"2026-08-25", deadline:"2026-11-20", debut:"2027-07-01",
-        stage:"postuler", scoring:{interet:3,prestige:3,access:4,remu:3}, manual:"",
-        notes:"SaaS cloud storage/collaboration, placement year possible."
-      }
+      mk({ entreprise:"Jefferies", poste:"Summer Analyst – Equity Sales & Trading 2027", theme:"marche", sousTheme:"Sales Trading", ville:"londres", type:"summer", lien:"https://www.jefferies.com/careers/", datePublication:"2026-09-01", deadline:"2026-11-29", dateDebut:"2027-06-15", etape:"a_postuler", rolling:true, notes:"Process en rolling : postuler le plus tôt possible malgré la deadline affichée.", score:{interet:4,prestige:5,accessibilite:2,remuneration:5} },1),
+      mk({ entreprise:"Lazard", poste:"Asset Management – Sales & Marketing Internship", theme:"marche", sousTheme:"Asset Management", ville:"londres", type:"classique", lien:"https://www.lazard.com/careers/", datePublication:"2026-09-10", deadline:"", dateDebut:"2027-01-05", etape:"a_postuler", rolling:true, notes:"Pas de deadline fixe communiquée, traitement au fil de l'eau.", score:{interet:3,prestige:4,accessibilite:3,remuneration:4} },2),
+      mk({ entreprise:"Rothschild & Co", poste:"Off-Cycle Internship – M&A Corporate and Financing Advisory", theme:"corporate", sousTheme:"M&A", ville:"paris", type:"offcycle", lien:"https://www.rothschildandco.com/en/careers/", datePublication:"2026-08-20", deadline:"2026-11-01", dateDebut:"2027-01-10", etape:"a_postuler", rolling:false, notes:"", score:{interet:5,prestige:5,accessibilite:2,remuneration:4} },3),
+      mk({ entreprise:"Rothschild & Co", poste:"Stage – Transaction R&Co Global Advisory", theme:"corporate", sousTheme:"M&A", ville:"paris", type:"classique", lien:"https://www.rothschildandco.com/en/careers/", datePublication:"2026-08-25", deadline:"", dateDebut:"2027-02-01", etape:"a_postuler", rolling:true, notes:"Rolling basis.", score:{interet:4,prestige:5,accessibilite:2,remuneration:4} },4),
+      mk({ entreprise:"Evercore", poste:"Summer Intern – Restructuring", theme:"corporate", sousTheme:"Restructuring", ville:"londres", type:"summer", lien:"https://www.evercore.com/careers/", datePublication:"2026-08-15", deadline:"2026-10-11", dateDebut:"2027-07-01", etape:"a_postuler", rolling:false, notes:"⚠️ Deadline très proche, prioriser cette candidature.", score:{interet:4,prestige:5,accessibilite:2,remuneration:5} },5),
+      mk({ entreprise:"Evercore", poste:"Off-Cycle – Financial Sponsors Group", theme:"corporate", sousTheme:"M&A", ville:"paris", type:"offcycle", lien:"https://www.evercore.com/careers/", datePublication:"2026-09-05", deadline:"", dateDebut:"2027-01-15", etape:"a_postuler", rolling:true, notes:"Rolling basis.", score:{interet:4,prestige:5,accessibilite:2,remuneration:4} },6),
+      mk({ entreprise:"Lazard", poste:"M&A Internship (LazardNext)", theme:"corporate", sousTheme:"M&A", ville:"paris", type:"classique", lien:"https://www.lazard.com/careers/", datePublication:"2026-09-12", deadline:"", dateDebut:"2027-01-05", etape:"a_postuler", rolling:true, notes:"Candidature via le programme LazardNext.", score:{interet:4,prestige:5,accessibilite:3,remuneration:4} },7),
+      mk({ entreprise:"Tencent Cloud", poste:"Cloud & AI Sales Intern", theme:"tech", sousTheme:"Sales", ville:"londres", type:"classique", lien:"https://careers.tencent.com/", datePublication:"2026-09-18", deadline:"", dateDebut:"2027-02-01", etape:"a_postuler", rolling:true, notes:"BtoB, cloud/IA — bien rémunéré.", score:{interet:3,prestige:3,accessibilite:4,remuneration:4} },8),
+      mk({ entreprise:"Snowflake", poste:"SDR Intern", theme:"tech", sousTheme:"SDR", ville:"londres", type:"classique", lien:"https://careers.snowflake.com/", datePublication:"2026-09-20", deadline:"", dateDebut:"2027-01-01", etape:"a_postuler", rolling:true, notes:"SaaS data cloud, BtoB.", score:{interet:3,prestige:3,accessibilite:4,remuneration:4} },9),
+      mk({ entreprise:"Box", poste:"SDR Placement Student", theme:"tech", sousTheme:"Sales", ville:"londres", type:"classique", lien:"https://www.box.com/careers", datePublication:"2026-09-22", deadline:"", dateDebut:"2027-07-01", etape:"a_postuler", rolling:true, notes:"Placement year, SaaS BtoB.", score:{interet:3,prestige:3,accessibilite:4,remuneration:3} },10)
     ];
   }
 
+  /* ---------- Persistence (robuste) ---------- */
   function loadData(){
-    var raw = null;
-    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){ raw = null; }
-    var parsed = null;
-    if(raw){
-      try{ parsed = JSON.parse(raw); }catch(e){ parsed = null; }
+    var raw;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }
+    catch(e){ raw = null; }
+
+    if(raw === null || raw === undefined){
+      // Jamais rien sauvegardé sur cette URL/navigateur -> premier lancement
+      var sample = getSampleData();
+      persist(sample);
+      return sample;
     }
-    if(Array.isArray(parsed) && parsed.length > 0){
-      state.data = parsed;
-    } else {
-      state.data = seedData();
-      saveData();
+    try{
+      var parsed = JSON.parse(raw);
+      if(Array.isArray(parsed)){
+        return parsed; // Respecte l'état réel, même si vide (l'utilisateur a peut-être tout supprimé volontairement)
+      }
+      throw new Error("format invalide");
+    }catch(e){
+      console.error("Données corrompues dans le localStorage, chargement des offres de veille par sécurité.", e);
+      var fallback = getSampleData();
+      persist(fallback);
+      return fallback;
+    }
+  }
+
+  function persist(data){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      showSaved();
+    }catch(e){
+      console.error("Erreur de sauvegarde localStorage", e);
+      showSaveError();
     }
   }
 
   function saveData(){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data)); }catch(e){}
+    persist(cards);
   }
 
-  function computeScore(scoring){
-    if(!scoring) return 0;
-    var i = Number(scoring.interet)||0;
-    var p = Number(scoring.prestige)||0;
-    var a = Number(scoring.access)||0;
-    var r = Number(scoring.remu)||0;
-    return (i+p+a+r) * 5;
+  var saveIndicatorTimeout = null;
+  function showSaved(){
+    var el = document.getElementById("save-indicator-text");
+    var box = document.getElementById("save-indicator");
+    box.classList.remove("saving");
+    var now = new Date();
+    var hh = String(now.getHours()).padStart(2,"0");
+    var mm = String(now.getMinutes()).padStart(2,"0");
+    var ss = String(now.getSeconds()).padStart(2,"0");
+    el.textContent = "Sauvegardé automatiquement à " + hh + ":" + mm + ":" + ss + " dans ce navigateur";
+  }
+  function showSaveError(){
+    var el = document.getElementById("save-indicator-text");
+    var box = document.getElementById("save-indicator");
+    box.classList.add("saving");
+    el.textContent = "⚠️ Erreur de sauvegarde locale (stockage plein ou navigation privée ?)";
   }
 
-  function computePriority(item){
-    if(item.manual) return item.manual;
-    var score = computeScore(item.scoring);
-    if(score >= 80) return "haute";
-    if(score >= 50) return "moyenne";
+  /* ---------- Utils ---------- */
+  function computeScore(card){
+    var s = card.score || {interet:3,prestige:3,accessibilite:3,remuneration:3};
+    return (Number(s.interet||0) + Number(s.prestige||0) + Number(s.accessibilite||0) + Number(s.remuneration||0)) * 5;
+  }
+  function getPriority(card){
+    if(card.priorityOverride && card.priorityOverride !== "auto") return card.priorityOverride;
+    var sc = computeScore(card);
+    if(sc >= 80) return "haute";
+    if(sc >= 50) return "moyenne";
     return "basse";
   }
-
   function daysUntil(dateStr){
     if(!dateStr) return null;
-    var today = new Date();
-    today.setHours(0,0,0,0);
-    var target = new Date(dateStr + "T00:00:00");
-    return Math.round((target - today) / 86400000);
+    var d = new Date(dateStr + "T23:59:59");
+    var diff = d.getTime() - Date.now();
+    return Math.ceil(diff / 86400000);
   }
-
-  function deadlineChip(dateStr){
-    if(!dateStr) return {cls:"dl-none", txt:"Pas de deadline"};
-    var d = daysUntil(dateStr);
-    var formatted = new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR", {day:"2-digit", month:"short", year:"numeric"});
-    if(d < 0) return {cls:"dl-passed", txt:"Dépassée (" + formatted + ")"};
-    if(d <= 3) return {cls:"dl-urgent", txt:"⚠️ " + formatted + " (J-" + d + ")"};
-    if(d <= 10) return {cls:"dl-soon", txt:formatted + " (J-" + d + ")"};
-    return {cls:"dl-ok", txt:formatted + " (J-" + d + ")"};
+  function deadlineInfo(card){
+    if(card.rolling && !card.deadline){
+      return { cls:"dl-soon", text:"⏳ Rolling — postuler tôt" };
+    }
+    if(!card.deadline){
+      return { cls:"dl-none", text:"Pas de deadline connue" };
+    }
+    var d = daysUntil(card.deadline);
+    var formatted = formatDate(card.deadline);
+    if(d < 0) return { cls:"dl-passed", text:"Deadline dépassée (" + formatted + ")" };
+    if(d <= 3) return { cls:"dl-urgent", text:"⚠️ J-" + d + " (" + formatted + ")" };
+    if(d <= 10) return { cls:"dl-soon", text:"J-" + d + " (" + formatted + ")" };
+    return { cls:"dl-ok", text:"J-" + d + " (" + formatted + ")" };
   }
-
   function formatDate(dateStr){
     if(!dateStr) return "—";
-    return new Date(dateStr + "T00:00:00").toLocaleDateString("fr-FR", {day:"2-digit", month:"short", year:"numeric"});
+    var p = dateStr.split("-");
+    if(p.length !== 3) return dateStr;
+    return p[2] + "/" + p[1] + "/" + p[0];
+  }
+  function escapeHtml(str){
+    if(str === undefined || str === null) return "";
+    return String(str).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
   }
 
-  function getFiltered(){
-    var s = state.search.trim().toLowerCase();
-    var out = state.data.filter(function(d){
-      if(state.filterTheme !== "all" && d.theme !== state.filterTheme) return false;
-      if(state.filterVille !== "all" && d.ville !== state.filterVille) return false;
-      if(state.filterType !== "all" && d.type !== state.filterType) return false;
-      if(s){
-        var hay = (d.company + " " + d.role + " " + (d.sub||"") + " " + (d.notes||"")).toLowerCase();
-        if(hay.indexOf(s) === -1) return false;
+  /* ---------- Rendering ---------- */
+  function getFilters(){
+    return {
+      search: document.getElementById("search").value.trim().toLowerCase(),
+      theme: document.getElementById("filter-theme").value,
+      ville: document.getElementById("filter-ville").value,
+      sort: document.getElementById("sort-by").value
+    };
+  }
+
+  function applyFilters(list){
+    var f = getFilters();
+    var out = list.filter(function(c){
+      if(f.theme && c.theme !== f.theme) return false;
+      if(f.ville && c.ville !== f.ville) return false;
+      if(f.search){
+        var hay = (c.entreprise + " " + c.poste + " " + (c.sousTheme||"")).toLowerCase();
+        if(hay.indexOf(f.search) === -1) return false;
       }
       return true;
     });
     out.sort(function(a,b){
-      if(state.sortBy === "score"){
-        return computeScore(b.scoring) - computeScore(a.scoring);
-      }
-      if(state.sortBy === "parution"){
-        return (b.parution||"").localeCompare(a.parution||"");
-      }
-      if(state.sortBy === "debut"){
-        return (a.debut||"9999").localeCompare(b.debut||"9999");
-      }
-      // deadline par défaut : plus proche d'abord, vide à la fin
-      var da = a.deadline || "9999-99-99";
-      var db = b.deadline || "9999-99-99";
-      return da.localeCompare(db);
+      if(f.sort === "score") return computeScore(b) - computeScore(a);
+      if(f.sort === "date_ajout") return (b.dateAjout||"").localeCompare(a.dateAjout||"");
+      if(f.sort === "entreprise") return a.entreprise.localeCompare(b.entreprise);
+      // deadline (défaut) : rolling et sans deadline en dernier, les plus urgentes d'abord
+      var da = a.deadline ? new Date(a.deadline).getTime() : Infinity;
+      var db = b.deadline ? new Date(b.deadline).getTime() : Infinity;
+      return da - db;
     });
     return out;
   }
 
-  function renderStats(){
-    var all = state.data;
-    var urgent = all.filter(function(d){ var dd=daysUntil(d.deadline); return dd!==null && dd>=0 && dd<=3; }).length;
-    var entretien = all.filter(function(d){ return d.stage==="entretien"; }).length;
-    var offre = all.filter(function(d){ return d.stage==="offre"; }).length;
-    var paris = all.filter(function(d){ return d.ville==="paris"; }).length;
-    var londres = all.filter(function(d){ return d.ville==="londres"; }).length;
-    var marche = all.filter(function(d){ return d.theme==="marche"; }).length;
-    var corporate = all.filter(function(d){ return d.theme==="corporate"; }).length;
-    var tech = all.filter(function(d){ return d.theme==="tech"; }).length;
-
-    var cards = [
-      {num: all.length, label:"Total"},
-      {num: paris, label:"🇫🇷 Paris"},
-      {num: londres, label:"🇬🇧 Londres"},
-      {num: marche, label:"📈 Marché"},
-      {num: corporate, label:"🤝 Corporate"},
-      {num: tech, label:"💻 Tech"},
-      {num: urgent, label:"Deadlines ≤3j"},
-      {num: entretien, label:"Entretiens"},
-      {num: offre, label:"Offres"}
-    ];
-    var html = cards.map(function(c){
-      return '<div class="stat-card"><div class="num">' + c.num + '</div><div class="label">' + c.label + '</div></div>';
-    }).join("");
-    document.getElementById("stats").innerHTML = html;
-  }
-
-  function cardHtml(item){
-    var priority = computePriority(item);
-    var score = computeScore(item.scoring);
-    var theme = THEMES[item.theme] || {};
-    var ville = VILLES[item.ville] || {};
-    var dl = deadlineChip(item.deadline);
-    var notes = item.notes ? '<div class="notes-preview">' + escapeHtml(item.notes) + '</div>' : "";
-    var linkBtn = item.link ? '<a href="' + escapeHtml(item.link) + '" target="_blank" rel="noopener">🔗 Annonce</a>' : "";
-
-    return (
-      '<div class="card" draggable="true" data-id="' + item.id + '">' +
-        '<div class="top-row">' +
-          '<div>' +
-            '<h4>' + escapeHtml(item.company) + '</h4>' +
-            '<div class="role">' + escapeHtml(item.role) + '</div>' +
-            (item.sub ? '<div class="role-sub">' + escapeHtml(item.sub) + '</div>' : '') +
-          '</div>' +
-          '<span class="score-badge score-' + priority + '">' + score + '/100</span>' +
-        '</div>' +
-        '<div class="meta-row">' +
-          '<span class="meta-tag ' + (ville.cls||"") + '">' + (ville.flag||"") + ' ' + (ville.label||item.ville) + '</span>' +
-          '<span class="meta-tag ' + (theme.cls||"") + '">' + (theme.icon||"") + ' ' + (theme.label||item.theme) + '</span>' +
-          '<span class="meta-tag tag-type">' + (TYPES[item.type]||item.type) + '</span>' +
-        '</div>' +
-        '<div class="dates-row">' +
-          '<span>📰 Parution : <b>' + formatDate(item.parution) + '</b></span>' +
-          '<span>🚀 Début de stage : <b>' + formatDate(item.debut) + '</b></span>' +
-        '</div>' +
-        '<span class="deadline-chip ' + dl.cls + '">' + dl.txt + '</span>' +
-        notes +
-        '<div class="actions">' +
-          linkBtn +
-          '<button type="button" class="edit-btn" data-id="' + item.id + '">✏️ Modifier</button>' +
-          '<button type="button" class="del-btn" data-id="' + item.id + '">🗑 Supprimer</button>' +
-        '</div>' +
-      '</div>'
-    );
-  }
-
-  function columnsHtml(items, extraClass){
-    var byStage = {};
-    STAGES.forEach(function(s){ byStage[s.key] = []; });
-    items.forEach(function(it){ if(byStage[it.stage]) byStage[it.stage].push(it); });
-
-    var cols = STAGES.map(function(s){
-      var list = byStage[s.key];
-      var body = list.length
-        ? list.map(cardHtml).join("")
-        : '<div class="empty-msg">Aucune candidature</div>';
-      return (
-        '<div class="column">' +
-          '<div class="column-head">' +
-            '<h3><span class="dot" style="background:' + s.color + '"></span>' + s.label + '</h3>' +
-            '<span class="count-badge">' + list.length + '</span>' +
-          '</div>' +
-          '<div class="column-body" data-stage="' + s.key + '">' + body + '</div>' +
-        '</div>'
-      );
-    }).join("");
-
-    return '<div class="board ' + (extraClass||"") + '">' + cols + '</div>';
-  }
-
   function render(){
     renderStats();
-    var filtered = getFiltered();
-    var container = document.getElementById("boardContainer");
-    var html = "";
+    var filtered = applyFilters(cards);
+    var container = document.getElementById("board-container");
+    container.innerHTML = "";
 
-    if(state.view === "etape"){
-      html = columnsHtml(filtered, "last");
-    } else if(state.view === "theme"){
-      Object.keys(THEMES).forEach(function(key, idx, arr){
-        var theme = THEMES[key];
-        var items = filtered.filter(function(d){ return d.theme === key; });
-        html += (
-          '<div class="section-header">' +
-            '<span class="icon">' + theme.icon + '</span>' +
-            '<div class="titles"><h2>' + theme.label + '</h2><div class="sub">' + theme.subs.join(" · ") + '</div></div>' +
-            '<span class="badge-count">' + items.length + ' candidature(s)</span>' +
-          '</div>'
-        );
-        html += columnsHtml(items, idx === arr.length-1 ? "last" : "");
+    if(currentView === "etape"){
+      container.appendChild(buildBoard(filtered, "Toutes les candidatures", "🗂️", null));
+    } else if(currentView === "theme"){
+      Object.keys(THEMES).forEach(function(key){
+        var subset = filtered.filter(function(c){ return c.theme === key; });
+        container.appendChild(buildSectionHeader(THEMES[key].icon, THEMES[key].label, subset.length));
+        container.appendChild(buildBoard(subset, null, null, key));
       });
-    } else if(state.view === "ville"){
-      Object.keys(VILLES).forEach(function(key, idx, arr){
-        var ville = VILLES[key];
-        var items = filtered.filter(function(d){ return d.ville === key; });
-        html += (
-          '<div class="section-header">' +
-            '<span class="icon">' + ville.flag + '</span>' +
-            '<div class="titles"><h2>' + ville.label + '</h2><div class="sub">Toutes thématiques confondues</div></div>' +
-            '<span class="badge-count">' + items.length + ' candidature(s)</span>' +
-          '</div>'
-        );
-        html += columnsHtml(items, idx === arr.length-1 ? "last" : "");
+    } else if(currentView === "ville"){
+      Object.keys(VILLES).forEach(function(key){
+        var subset = filtered.filter(function(c){ return c.ville === key; });
+        container.appendChild(buildSectionHeader(VILLES[key].icon, VILLES[key].label, subset.length));
+        container.appendChild(buildBoard(subset, null, key, null));
       });
     }
-
-    container.innerHTML = html;
-    attachCardEvents();
-    attachDnD();
   }
 
-  function attachCardEvents(){
-    document.querySelectorAll(".edit-btn").forEach(function(btn){
-      btn.addEventListener("click", function(){ openModal(btn.getAttribute("data-id")); });
+  function buildSectionHeader(icon, title, count){
+    var div = document.createElement("div");
+    div.className = "section-header";
+    div.innerHTML = '<span class="icon">'+icon+'</span>' +
+      '<div class="titles"><h2>'+escapeHtml(title)+'</h2></div>' +
+      '<span class="badge-count">'+count+' candidature'+(count>1?'s':'')+'</span>';
+    return div;
+  }
+
+  function buildBoard(list, title, villeKeyIfAny, themeKeyIfAny){
+    var board = document.createElement("div");
+    board.className = "board";
+    ETAPES.forEach(function(etape){
+      var col = document.createElement("div");
+      col.className = "column";
+      col.dataset.etape = etape.key;
+
+      var head = document.createElement("div");
+      head.className = "column-head";
+      var subset = list.filter(function(c){ return c.etape === etape.key; });
+      head.innerHTML = '<h3><span class="dot" style="background:'+etape.color+'"></span>'+etape.label+'</h3>' +
+        '<span class="count-badge">'+subset.length+'</span>';
+      col.appendChild(head);
+
+      var body = document.createElement("div");
+      body.className = "column-body";
+      body.dataset.etape = etape.key;
+
+      if(subset.length === 0){
+        var empty = document.createElement("div");
+        empty.className = "empty-msg";
+        empty.textContent = "Aucune candidature";
+        body.appendChild(empty);
+      } else {
+        subset.forEach(function(card){
+          body.appendChild(buildCardElement(card));
+        });
+      }
+
+      attachDropZone(body);
+      col.appendChild(body);
+      board.appendChild(col);
     });
-    document.querySelectorAll(".del-btn").forEach(function(btn){
-      btn.addEventListener("click", function(){
-        var id = btn.getAttribute("data-id");
-        if(confirm("Supprimer définitivement cette candidature ?")){
-          state.data = state.data.filter(function(d){ return d.id !== id; });
-          saveData();
-          render();
-        }
-      });
+    return board;
+  }
+
+  function buildCardElement(card){
+    var el = document.createElement("div");
+    el.className = "card";
+    el.draggable = true;
+    el.dataset.id = card.id;
+
+    var priority = getPriority(card);
+    var score = computeScore(card);
+    var theme = THEMES[card.theme] || {label:card.theme, icon:"", cls:""};
+    var ville = VILLES[card.ville] || {label:card.ville, icon:"", cls:""};
+    var dl = deadlineInfo(card);
+
+    var html = '';
+    html += '<div class="top-row">';
+    html += '  <div><h4>'+escapeHtml(card.entreprise)+'</h4>';
+    html += '  <div class="role">'+escapeHtml(card.poste)+'</div>';
+    if(card.sousTheme) html += '  <div class="role-sub">'+escapeHtml(card.sousTheme)+'</div>';
+    html += '  </div>';
+    html += '  <span class="score-badge score-'+priority+'">'+score+'/100</span>';
+    html += '</div>';
+
+    html += '<div class="meta-row">';
+    html += '  <span class="meta-tag '+theme.cls+'">'+theme.icon+' '+theme.label+'</span>';
+    html += '  <span class="meta-tag '+ville.cls+'">'+ville.icon+' '+ville.label+'</span>';
+    if(card.type) html += '  <span class="meta-tag tag-type">'+ (TYPES[card.type] || card.type) +'</span>';
+    html += '</div>';
+
+    html += '<div class="dates-row">';
+    html += '  <span>📅 Parution : <b>'+formatDate(card.datePublication)+'</b></span>';
+    html += '  <span>🚀 Début de stage : <b>'+formatDate(card.dateDebut)+'</b></span>';
+    html += '</div>';
+
+    html += '<span class="deadline-chip '+dl.cls+'">'+dl.text+'</span>';
+
+    if(card.notes){
+      html += '<div class="notes-preview">'+escapeHtml(card.notes)+'</div>';
+    }
+
+    html += '<div class="actions">';
+    if(card.lien) html += '  <a href="'+escapeHtml(card.lien)+'" target="_blank" rel="noopener">🔗 Annonce</a>';
+    html += '  <button type="button" data-action="edit" data-id="'+card.id+'">✏️ Modifier</button>';
+    html += '  <button type="button" data-action="delete" data-id="'+card.id+'">🗑️ Supprimer</button>';
+    html += '</div>';
+
+    el.innerHTML = html;
+
+    el.addEventListener("dragstart", function(){ el.classList.add("dragging"); });
+    el.addEventListener("dragend", function(){ el.classList.remove("dragging"); });
+
+    el.querySelector('[data-action="edit"]').addEventListener("click", function(){ openModal(card.id); });
+    el.querySelector('[data-action="delete"]').addEventListener("click", function(){ deleteCard(card.id); });
+
+    return el;
+  }
+
+  function attachDropZone(body){
+    body.addEventListener("dragover", function(e){
+      e.preventDefault();
+      body.classList.add("dragover");
+    });
+    body.addEventListener("dragleave", function(){
+      body.classList.remove("dragover");
+    });
+    body.addEventListener("drop", function(e){
+      e.preventDefault();
+      body.classList.remove("dragover");
+      var dragging = document.querySelector(".card.dragging");
+      if(!dragging) return;
+      var id = dragging.dataset.id;
+      var newEtape = body.dataset.etape;
+      var card = cards.find(function(c){ return c.id === id; });
+      if(card && card.etape !== newEtape){
+        card.etape = newEtape;
+        saveData();
+        render();
+      }
     });
   }
 
-  function attachDnD(){
-    var draggedId = null;
-    document.querySelectorAll(".card").forEach(function(card){
-      card.addEventListener("dragstart", function(e){
-        draggedId = card.getAttribute("data-id");
-        card.classList.add("dragging");
-        e.dataTransfer.effectAllowed = "move";
-      });
-      card.addEventListener("dragend", function(){
-        card.classList.remove("dragging");
-      });
-    });
-    document.querySelectorAll(".column-body").forEach(function(body){
-      body.addEventListener("dragover", function(e){
-        e.preventDefault();
-        body.classList.add("dragover");
-      });
-      body.addEventListener("dragleave", function(){
-        body.classList.remove("dragover");
-      });
-      body.addEventListener("drop", function(e){
-        e.preventDefault();
-        body.classList.remove("dragover");
-        var newStage = body.getAttribute("data-stage");
-        if(draggedId){
-          var item = state.data.find(function(d){ return d.id === draggedId; });
-          if(item && item.stage !== newStage){
-            item.stage = newStage;
-            saveData();
-            render();
-          }
-        }
-        draggedId = null;
-      });
-    });
+  function renderStats(){
+    var box = document.getElementById("stats");
+    var total = cards.length;
+    var paris = cards.filter(function(c){ return c.ville === "paris"; }).length;
+    var londres = cards.filter(function(c){ return c.ville === "londres"; }).length;
+    var marche = cards.filter(function(c){ return c.theme === "marche"; }).length;
+    var corporate = cards.filter(function(c){ return c.theme === "corporate"; }).length;
+    var tech = cards.filter(function(c){ return c.theme === "tech"; }).length;
+    var urgentes = cards.filter(function(c){
+      if(!c.deadline) return false;
+      var d = daysUntil(c.deadline);
+      return d !== null && d >= 0 && d <= 3;
+    }).length;
+    var entretiens = cards.filter(function(c){ return c.etape === "entretien"; }).length;
+    var offres = cards.filter(function(c){ return c.etape === "offre"; }).length;
+
+    function card(num, label){
+      return '<div class="stat-card"><div class="num">'+num+'</div><div class="label">'+label+'</div></div>';
+    }
+    box.innerHTML =
+      card(total, "Total") +
+      card(paris, "🇫🇷 Paris") +
+      card(londres, "🇬🇧 Londres") +
+      card(marche, "Marché") +
+      card(corporate, "Corporate") +
+      card(tech, "Tech") +
+      card(urgentes, "⚠️ Deadlines ≤3j") +
+      card(entretiens, "Entretiens") +
+      card(offres, "Offres");
   }
 
-  // ---- Modal ----
-  function fillSubOptions(themeKey, selectedSub){
-    var sel = document.getElementById("f_subrole");
-    var subs = (THEMES[themeKey] && THEMES[themeKey].subs) || [];
-    sel.innerHTML = subs.map(function(s){
-      return '<option value="' + escapeHtml(s) + '"' + (s===selectedSub?' selected':'') + '>' + escapeHtml(s) + '</option>';
-    }).join("");
-  }
-
-  function updateScoreLive(){
-    var scoring = {
-      interet: Number(document.getElementById("s_interet").value),
-      prestige: Number(document.getElementById("s_prestige").value),
-      access: Number(document.getElementById("s_access").value),
-      remu: Number(document.getElementById("s_remu").value)
-    };
-    document.getElementById("v_interet").textContent = scoring.interet;
-    document.getElementById("v_prestige").textContent = scoring.prestige;
-    document.getElementById("v_access").textContent = scoring.access;
-    document.getElementById("v_remu").textContent = scoring.remu;
-    document.getElementById("scoreLive").textContent = computeScore(scoring) + " / 100";
-  }
-
+  /* ---------- Modal / CRUD ---------- */
   function openModal(id){
-    state.editingId = id || null;
-    var item = id ? state.data.find(function(d){ return d.id === id; }) : null;
+    editingId = id || null;
+    var card = id ? cards.find(function(c){ return c.id === id; }) : null;
 
-    document.getElementById("modalTitle").textContent = item ? "Modifier la candidature" : "Ajouter une candidature";
-    document.getElementById("btnDelete").style.display = item ? "inline-flex" : "none";
+    document.getElementById("modal-title").textContent = card ? "Modifier la candidature" : "Ajouter une candidature";
+    document.getElementById("f-id").value = card ? card.id : "";
+    document.getElementById("f-entreprise").value = card ? card.entreprise : "";
+    document.getElementById("f-poste").value = card ? card.poste : "";
+    document.getElementById("f-theme").value = card ? card.theme : "marche";
+    document.getElementById("f-soustheme").value = card ? (card.sousTheme||"") : "";
+    document.getElementById("f-ville").value = card ? card.ville : "paris";
+    document.getElementById("f-type").value = card ? card.type : "classique";
+    document.getElementById("f-lien").value = card ? (card.lien||"") : "";
+    document.getElementById("f-date-parution").value = card ? (card.datePublication||"") : "";
+    document.getElementById("f-deadline").value = card ? (card.deadline||"") : "";
+    document.getElementById("f-date-debut").value = card ? (card.dateDebut||"") : "";
+    document.getElementById("f-etape").value = card ? card.etape : "a_postuler";
+    document.getElementById("f-rolling").checked = card ? !!card.rolling : false;
+    document.getElementById("f-notes").value = card ? (card.notes||"") : "";
 
-    document.getElementById("f_company").value = item ? item.company : "";
-    document.getElementById("f_role").value = item ? item.role : "";
-    document.getElementById("f_theme").value = item ? item.theme : "marche";
-    fillSubOptions(document.getElementById("f_theme").value, item ? item.sub : "");
-    document.getElementById("f_ville").value = item ? item.ville : "paris";
-    document.getElementById("f_type").value = item ? item.type : "classique";
-    document.getElementById("f_link").value = item ? (item.link||"") : "";
-    document.getElementById("f_parution").value = item ? (item.parution||"") : "";
-    document.getElementById("f_deadline").value = item ? (item.deadline||"") : "";
-    document.getElementById("f_debut").value = item ? (item.debut||"") : "";
-    document.getElementById("f_stage").value = item ? item.stage : "postuler";
-    document.getElementById("f_notes").value = item ? (item.notes||"") : "";
-    document.getElementById("f_manual").value = item ? (item.manual||"") : "";
+    var sc = card && card.score ? card.score : {interet:3,prestige:3,accessibilite:3,remuneration:3};
+    ["interet","prestige","accessibilite","remuneration"].forEach(function(k){
+      document.getElementById("f-score-"+k).value = sc[k];
+      document.getElementById("val-"+k).textContent = sc[k];
+    });
+    document.getElementById("f-priority-override").value = card ? (card.priorityOverride||"auto") : "auto";
 
-    var sc = item ? item.scoring : {interet:3,prestige:3,access:3,remu:3};
-    document.getElementById("s_interet").value = sc.interet;
-    document.getElementById("s_prestige").value = sc.prestige;
-    document.getElementById("s_access").value = sc.access;
-    document.getElementById("s_remu").value = sc.remu;
-    updateScoreLive();
-
-    document.getElementById("overlay").classList.add("open");
+    updateSousThemeSuggestions();
+    updateLiveScore();
+    document.getElementById("modal-overlay").classList.add("open");
   }
 
   function closeModal(){
-    document.getElementById("overlay").classList.remove("open");
-    state.editingId = null;
+    document.getElementById("modal-overlay").classList.remove("open");
+    editingId = null;
   }
 
-  function handleSubmit(e){
+  function updateSousThemeSuggestions(){
+    var theme = document.getElementById("f-theme").value;
+    var list = THEMES[theme] ? THEMES[theme].suggestions : [];
+    var dl = document.getElementById("sous-theme-suggestions");
+    dl.innerHTML = list.map(function(s){ return '<option value="'+escapeHtml(s)+'">'; }).join("");
+  }
+
+  function updateLiveScore(){
+    var vals = {};
+    ["interet","prestige","accessibilite","remuneration"].forEach(function(k){
+      vals[k] = Number(document.getElementById("f-score-"+k).value);
+      document.getElementById("val-"+k).textContent = vals[k];
+    });
+    var total = (vals.interet + vals.prestige + vals.accessibilite + vals.remuneration) * 5;
+    document.getElementById("score-live").textContent = total + "/100";
+  }
+
+  function deleteCard(id){
+    if(!confirm("Supprimer définitivement cette candidature ?")) return;
+    cards = cards.filter(function(c){ return c.id !== id; });
+    saveData();
+    render();
+  }
+
+  function handleFormSubmit(e){
     e.preventDefault();
-    var payload = {
-      company: document.getElementById("f_company").value.trim(),
-      role: document.getElementById("f_role").value.trim(),
-      theme: document.getElementById("f_theme").value,
-      sub: document.getElementById("f_subrole").value,
-      ville: document.getElementById("f_ville").value,
-      type: document.getElementById("f_type").value,
-      link: document.getElementById("f_link").value.trim(),
-      parution: document.getElementById("f_parution").value,
-      deadline: document.getElementById("f_deadline").value,
-      debut: document.getElementById("f_debut").value,
-      stage: document.getElementById("f_stage").value,
-      notes: document.getElementById("f_notes").value.trim(),
-      manual: document.getElementById("f_manual").value,
-      scoring: {
-        interet: Number(document.getElementById("s_interet").value),
-        prestige: Number(document.getElementById("s_prestige").value),
-        access: Number(document.getElementById("s_access").value),
-        remu: Number(document.getElementById("s_remu").value)
+    var id = document.getElementById("f-id").value;
+    var data = {
+      entreprise: document.getElementById("f-entreprise").value.trim(),
+      poste: document.getElementById("f-poste").value.trim(),
+      theme: document.getElementById("f-theme").value,
+      sousTheme: document.getElementById("f-soustheme").value.trim(),
+      ville: document.getElementById("f-ville").value,
+      type: document.getElementById("f-type").value,
+      lien: document.getElementById("f-lien").value.trim(),
+      datePublication: document.getElementById("f-date-parution").value,
+      deadline: document.getElementById("f-deadline").value,
+      dateDebut: document.getElementById("f-date-debut").value,
+      etape: document.getElementById("f-etape").value,
+      rolling: document.getElementById("f-rolling").checked,
+      notes: document.getElementById("f-notes").value.trim(),
+      priorityOverride: document.getElementById("f-priority-override").value,
+      score: {
+        interet: Number(document.getElementById("f-score-interet").value),
+        prestige: Number(document.getElementById("f-score-prestige").value),
+        accessibilite: Number(document.getElementById("f-score-accessibilite").value),
+        remuneration: Number(document.getElementById("f-score-remuneration").value)
       }
     };
 
-    if(!payload.company || !payload.role){ return; }
-
-    if(state.editingId){
-      var idx = state.data.findIndex(function(d){ return d.id === state.editingId; });
-      if(idx > -1){
-        payload.id = state.editingId;
-        state.data[idx] = payload;
+    if(id){
+      var existing = cards.find(function(c){ return c.id === id; });
+      if(existing){
+        Object.assign(existing, data);
       }
     } else {
-      payload.id = uid();
-      state.data.push(payload);
+      data.id = "card-" + Date.now() + "-" + Math.random().toString(36).slice(2,8);
+      data.dateAjout = new Date().toISOString().slice(0,10);
+      cards.push(data);
     }
+
     saveData();
+    render();
     closeModal();
+  }
+
+  /* ---------- Import / Export ---------- */
+  function exportJSON(){
+    var blob = new Blob([JSON.stringify(cards, null, 2)], {type:"application/json"});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "pipeline_stages_export_" + new Date().toISOString().slice(0,10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function backupBeforeOverwrite(){
+    // Filet de sécurité : garde une copie de l'état actuel AVANT tout remplacement
+    // (import ou rechargement des offres de veille), récupérable via le bouton dédié.
+    try{ localStorage.setItem(BACKUP_KEY, JSON.stringify({ at: new Date().toISOString(), data: cards })); }
+    catch(e){ console.error("Impossible de créer la sauvegarde de sécurité avant remplacement", e); }
+    updateRestoreButtonVisibility();
+  }
+
+  function importJSON(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try{
+        var parsed = JSON.parse(e.target.result);
+        if(!Array.isArray(parsed)) throw new Error("Le fichier ne contient pas une liste valide.");
+        if(!confirm("Importer ce fichier va REMPLACER toutes tes candidatures actuelles ("+cards.length+") par les "+parsed.length+" du fichier.\n\nUne sauvegarde de ton état actuel sera gardée automatiquement (bouton \"Restaurer\" si besoin). Continuer ?")) return;
+        backupBeforeOverwrite();
+        cards = parsed;
+        saveData();
+        render();
+        alert("Import réussi : " + cards.length + " candidature(s) chargée(s).");
+      }catch(err){
+        alert("Erreur lors de l'import : fichier JSON invalide.\n" + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  function reloadSampleData(){
+    if(!confirm("Cela va REMPLACER toutes tes candidatures actuelles ("+cards.length+") par les 10 offres de veille.\n\nUne sauvegarde de ton état actuel sera gardée automatiquement (bouton \"Restaurer\" si besoin). Continuer ?")) return;
+    backupBeforeOverwrite();
+    cards = getSampleData();
+    saveData();
     render();
   }
 
-  // ---- Event wiring ----
+  function restoreBackup(){
+    var raw;
+    try{ raw = localStorage.getItem(BACKUP_KEY); }catch(e){ raw = null; }
+    if(!raw){ alert("Aucune sauvegarde de sécurité disponible."); return; }
+    var parsed;
+    try{ parsed = JSON.parse(raw); }catch(e){ alert("Sauvegarde corrompue, impossible de restaurer."); return; }
+    var when = parsed.at ? new Date(parsed.at).toLocaleString("fr-FR") : "date inconnue";
+    if(!confirm("Restaurer l'état d'avant ton dernier import/rechargement (sauvegardé le "+when+", "+(parsed.data||[]).length+" candidature(s)) ?\n\nCela remplacera tes "+cards.length+" candidature(s) actuelles.")) return;
+    cards = parsed.data || [];
+    saveData();
+    render();
+    alert("Sauvegarde restaurée : " + cards.length + " candidature(s).");
+  }
+
+  function updateRestoreButtonVisibility(){
+    var btn = document.getElementById("btn-restore-backup");
+    if(!btn) return;
+    var has;
+    try{ has = !!localStorage.getItem(BACKUP_KEY); }catch(e){ has = false; }
+    btn.style.display = has ? "inline-flex" : "none";
+  }
+
+  /* ---------- Event bindings ---------- */
   function init(){
-    loadData();
+    cards = loadData();
 
-    document.getElementById("btnAdd").addEventListener("click", function(){ openModal(null); });
-    document.getElementById("btnCancel").addEventListener("click", closeModal);
-    document.getElementById("overlay").addEventListener("click", function(e){
-      if(e.target.id === "overlay") closeModal();
+    document.getElementById("btn-add").addEventListener("click", function(){ openModal(null); });
+    document.getElementById("btn-cancel").addEventListener("click", closeModal);
+    document.getElementById("modal-overlay").addEventListener("click", function(e){
+      if(e.target.id === "modal-overlay") closeModal();
     });
-    document.getElementById("cardForm").addEventListener("submit", handleSubmit);
-    document.getElementById("btnDelete").addEventListener("click", function(){
-      if(state.editingId && confirm("Supprimer définitivement cette candidature ?")){
-        state.data = state.data.filter(function(d){ return d.id !== state.editingId; });
-        saveData();
-        closeModal();
-        render();
-      }
+    document.getElementById("card-form").addEventListener("submit", handleFormSubmit);
+    document.getElementById("f-theme").addEventListener("change", updateSousThemeSuggestions);
+    ["interet","prestige","accessibilite","remuneration"].forEach(function(k){
+      document.getElementById("f-score-"+k).addEventListener("input", updateLiveScore);
     });
 
-    document.getElementById("f_theme").addEventListener("change", function(){
-      fillSubOptions(this.value, "");
+    document.getElementById("btn-export").addEventListener("click", exportJSON);
+    document.getElementById("btn-import-trigger").addEventListener("click", function(){
+      document.getElementById("file-import").click();
     });
-
-    ["s_interet","s_prestige","s_access","s_remu"].forEach(function(id){
-      document.getElementById(id).addEventListener("input", updateScoreLive);
-    });
-
-    document.getElementById("btnReload").addEventListener("click", function(){
-      if(confirm("Recharger les offres de veille ? Cela remplacera toutes tes candidatures actuelles par les 10 offres préchargées.")){
-        state.data = seedData();
-        saveData();
-        render();
-      }
-    });
-
-    document.getElementById("btnExport").addEventListener("click", function(){
-      var blob = new Blob([JSON.stringify(state.data, null, 2)], {type:"application/json"});
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      a.href = url;
-      a.download = "pipeline_stages_export.json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
-
-    document.getElementById("btnImportTrigger").addEventListener("click", function(){
-      document.getElementById("fileImport").click();
-    });
-    document.getElementById("fileImport").addEventListener("change", function(e){
-      var file = e.target.files[0];
-      if(!file) return;
-      var reader = new FileReader();
-      reader.onload = function(evt){
-        try{
-          var imported = JSON.parse(evt.target.result);
-          if(Array.isArray(imported)){
-            if(confirm("Remplacer toutes les candidatures actuelles par le contenu importé ?")){
-              state.data = imported;
-              saveData();
-              render();
-            }
-          } else {
-            alert("Fichier JSON invalide : un tableau de candidatures est attendu.");
-          }
-        }catch(err){
-          alert("Impossible de lire ce fichier JSON.");
-        }
+    document.getElementById("file-import").addEventListener("change", function(e){
+      if(e.target.files && e.target.files[0]){
+        importJSON(e.target.files[0]);
         e.target.value = "";
-      };
-      reader.readAsText(file);
+      }
     });
+    document.getElementById("btn-reload-sample").addEventListener("click", reloadSampleData);
+    document.getElementById("btn-restore-backup").addEventListener("click", restoreBackup);
+    updateRestoreButtonVisibility();
 
-    document.getElementById("search").addEventListener("input", function(){
-      state.search = this.value;
-      render();
-    });
-    document.getElementById("filterTheme").addEventListener("change", function(){
-      state.filterTheme = this.value; render();
-    });
-    document.getElementById("filterVille").addEventListener("change", function(){
-      state.filterVille = this.value; render();
-    });
-    document.getElementById("filterType").addEventListener("change", function(){
-      state.filterType = this.value; render();
-    });
-    document.getElementById("sortBy").addEventListener("change", function(){
-      state.sortBy = this.value; render();
-    });
+    document.getElementById("search").addEventListener("input", render);
+    document.getElementById("filter-theme").addEventListener("change", render);
+    document.getElementById("filter-ville").addEventListener("change", render);
+    document.getElementById("sort-by").addEventListener("change", render);
 
-    document.getElementById("viewToggle").addEventListener("click", function(e){
-      var btn = e.target.closest("button");
+    document.getElementById("view-toggle").addEventListener("click", function(e){
+      var btn = e.target.closest("button[data-view]");
       if(!btn) return;
-      document.querySelectorAll("#viewToggle button").forEach(function(b){ b.classList.remove("active"); });
-      btn.classList.add("active");
-      state.view = btn.getAttribute("data-view");
+      currentView = btn.dataset.view;
+      try{ localStorage.setItem(VIEW_KEY, currentView); }catch(e){}
+      Array.prototype.forEach.call(document.querySelectorAll("#view-toggle button"), function(b){
+        b.classList.toggle("active", b === btn);
+      });
       render();
     });
+
+    // Restaure la dernière vue utilisée
+    try{
+      var savedView = localStorage.getItem(VIEW_KEY);
+      if(savedView && ["etape","theme","ville"].indexOf(savedView) !== -1){
+        currentView = savedView;
+        Array.prototype.forEach.call(document.querySelectorAll("#view-toggle button"), function(b){
+          b.classList.toggle("active", b.dataset.view === savedView);
+        });
+      }
+    }catch(e){}
+
+    // Sauvegarde de sécurité supplémentaire avant fermeture de la page
+    window.addEventListener("beforeunload", function(){ try{ persist(cards); }catch(e){} });
 
     render();
+    showSaved();
   }
 
   document.addEventListener("DOMContentLoaded", init);
